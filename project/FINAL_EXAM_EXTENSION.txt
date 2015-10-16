@@ -1,0 +1,22 @@
+Extension Selected?
+
+--- MiddleProximityPlayer , WinBlockingPlayer (incomplete EC attempt)
+
+What you were able to accomplish towards completing this extension?
+
+--- I completed the extension and added MiddleProximityPlayer as a playable option in my game setup/PlayerChoice panels.
+
+What problems did you encounter?
+
+--- I had problems with the for loop that determined/returned the move with the closest distance to the center of the board.
+
+How did you overcome those problems?
+
+--- After moving things around a bit, I found that my program worked if I declared the move to be returned
+ [initialized as legalMoves.get(0)] outside of the loop but kept the parameter for distance [dfc] inside of the loop.
+
+What problems were you unable to solve?
+
+--- N/A
+
+How would you try to solve these problems if you had more time? (Be as specific as possible!)

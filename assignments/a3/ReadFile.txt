@@ -1,0 +1,188 @@
+Calculator
+
+/**
+ * This application creates the classes for a simple 4-function calculator.
+ *
+ * The calculator is spread over four classes instead of one class simply to
+ * demonstrate a design pattern called Model-View-Controller. MVC is widely used
+ * in the real world of modern object-oriented programming. The essential idea
+ * is that it separates the data (often a large and complicated database) from
+ * various views of that data (which may be webpages, custom applications,
+ * spreadsheets, and so on), so that views can vary without in any way changing
+ * the database. Another example is multi-player networked games. Each player
+ * would have a viewport (or several viewports---for instance, heads-up displays
+ * that may be overlaid onto the worldview), but the world itself would just be
+ * lots and lots of shared data stored on central servers that hold the world's
+ * dynamically changing data.
+ *
+ * In the particular case of this assignment, though, one view might be a visual
+ * calculator application and another view might be a command-line calculator. It's
+ * irrelevant to the Model whether the user is entering commands by typing on a
+ * keyboard and seeing output on the command line or by pressing buttons
+ * displayed on a screen using a mouse (or by pressing buttons by typing keys on
+ * the keyboard but seeing output on the screen, or both---or using a touchpad,
+ * or some future device). The point is that in all of the above cases, the
+ * Model would be entirely unchanged no matter the View or Views.
+ *
+ * For this assignment it's completely unnecessary for you to understand any of
+ * that. All you need to focus on is the Model class. If you wish, you might
+ * look at the Controller class to see how the logic works. Also, if you wish,
+ * you might look at the View class to see a bit of how Swing works too. In
+ * general, in MVC, M handles the data, C handles the logic (often called the
+ * 'business logic'), and V handles the display. C is like a brain, V is like a
+ * face, and M is like a memory.
+ */
+
+CalculatorController
+
+*
+ * An instance of this class is the Controller for a Calculator. It manages the
+ * Model, which holds the data used by the Calculator, and the View, which
+ * displays the controls and the data. It also specifies how the user is to
+ * interact with the View.
+ *
+ * In a simple 4-function Calculator, requests to do a calculation are specified
+ * to the Calculator by sequences like:
+ *
+ * operand1 operator operand2 =
+ *
+ * where 'operand1' and 'operand2' are positive whole numbers with no decimal
+ * points or exponents, and 'operator' is one of: '+', '-', 'x', or '/'. The
+ * spaces are not present in the input; the user indicates them to the
+ * Calculator via changes in input. For example, switching from digits to an
+ * operator implicitly tells the Calculator that an operand has ended, *and* it
+ * tells the Calculator what the operator is, *and* it tells the Calculator to
+ * expect a digit, which will start another operand. So the Calculator will keep
+ * computing through any sequence of 'operand' followed by 'operator', as long
+ * as the user keeps alternating them until the user presses '='. For instance,
+ * '4 + 3 - 5 / 2 =' will produce output '1'. Only two consecutive operators is
+ * an error.
+ *
+ * The Calculator is managed by its Controller, which is its brain. The
+ * Controller controls both the Calculator's Model (which holds the Calculator's
+ * data) and the Calculator's View (which displays the Calculator controls and
+ * its output to the user).
+ *
+ * The Controller keeps track of its own state via two variables, the boolean
+ * isExpectingTheFirstDigitOfAnOperand and the String previousOperator. (Note:
+ * If the Controller is *not* expecting the first digit of an operand, then it
+ * *must* be expecting an operator, which can only be one of the 4 above, or
+ * '='. So there's no need for a separate boolean for that condition. Early
+ * calculators were designed this way to cut down on the logic gates needed to
+ * build them, so they could be designed easily and built cheaply.)
+ *
+ * The Controller has two main branch cases (ignoring digit ingestion cases, its
+ * clear memory and display case, and its error case):
+ *
+ * 1/ If the Controller is currently expecting an operator, and the
+ * previousOperator is '=', then the Controller must have just ingested the last
+ * digit of the first number of a calculation request (that is, the Controller
+ * just ingested all of operand1).
+ *
+ * So the Controller then asks the Model to store that number in its memory for
+ * later use.
+ *
+ * 2/ If the Controller is currently expecting an operator, and the
+ * previousOperator isn't '=', then the previousOperator must be the operator
+ * that the Calculator must use to do the requested calculation. Also, the
+ * number that the Controller just ingested the last digit of must be the second
+ * number of that requested calculation (that is, the Controller just ingested
+ * all of operand2).
+ *
+ * So the Controller then asks the Model to do the requested calculation:
+ * <whatever is in the Model's memory> operator operand2
+ *
+ * After either case (1) or case (2), the Controller then asks the Model to
+ * fetch its memory, then the Controller asks the View to display that.
+ *
+ * In geek-speak, this is an example of a simple finite-state automaton (or
+ * finite-state machine).
+ */
+
+CalculatorModel
+
+/**
+ * An instance of this class holds the data used by a Calculator. It has no
+ * knowledge of either the View, which displays the controls and the data, nor
+ * the Controller, which mediates user interaction with the View.
+ *
+ * An instance of this class can be asked to return its memory, to set its
+ * memory to a given number, to add a number to its memory, to subtract a number
+ * from its memory, to multiply its memory by a number, and to divide its memory
+ * by a number.
+ *
+ * Since this class is holding the data for a simple 4-function calculator, it
+ * only needs one piece of information: a memory of the computation done so far.
+ * Thus, its 'memory' only needs to be one number large.
+ *
+ * One way to implement this class would be to represent its one number of
+ * memory as an int, but that would lead to problems that users of the
+ * calculator would notice.
+ *
+ * Problem 1: In addToMemory() and multiplyMemoryBy(): both adding and
+ * multiplying one huge number by another huge number can result in overflow
+ * (that is, the result is so large that it becomes negative, or if its even
+ * larger, positive again). Possible fix: intead of representing the memory as
+ * an int, represent it as a long and check the range of computed results---or
+ * even better, represent it as a double. (Alternately, you might use BigInteger
+ * to get arbitrary precision.)
+ *
+ * Problem 2: In divideMemoryBy(): underflow, roundoff, and division-by-zero are
+ * all possible. Division of a small number by a really large number can result
+ * in underflow (that is, the result is indistinguishable from zero and so
+ * that's how the result is reported). Further, integer division chops off
+ * fractions if the two numbers don't divide evenly. And finally, division by
+ * zero produces infinity. Possible fix: convert to long, or better, convert to
+ * double and check the result of the division, then do a fix with tests by
+ * converting to long instead of int. (Alternately, you could be much more exact
+ * by using BigDecimal; or again, just use BigInteger everywhere and get
+ * arbitrary precision.)
+ *
+ * In general, an arbitrary-precision solution is to use BigInteger everywhere
+ * and do all arithmetic yourself. But that would involve more work than is
+ * needed for this assignment.
+ *
+ * A less general, but good enough, solution (for the high- but still
+ * limited-precision work needed for a simple 4-function calculator), is simply
+ * to use double instead of int. doubles don't solve all the problems of ints
+ * since they too are fixed-precision and fixed-range (just much larger in both
+ * cases), but they do push both boundaries out far enough that most ordinary
+ * users won't notice (and in the rare cases when they might notice, they mostly
+ * won't care).
+ *
+ * By switching to doubles, all the methods become single lines, except for the
+ * getMemory() method. The only real hairball left would then be to properly
+ * handle two special case results when outputting memory (that is, in the
+ * getMemory() method).
+ *
+ * The two special cases are:
+ *
+ * 1/ division-by-zero has occurred somewhere in the operator pipeline, so the
+ * memory has become infinite, so whenever getMemory() is next called it has to
+ * report: 'infinity.'
+ *
+ * 2/ a whole number result has been produced, so the returned result needs to
+ * be reported without a decimal point (which is the default for all doubles).
+ * For example, on dividing 15 by 5, the result should be reported as '3' not
+ * '3.' or '3.0' etc.
+ *
+ * For such a simple calculator, a good-enough approximate solution in this case
+ * is to assume that the numbers generated by the calculator will all fit into
+ * longs. From there you need to figure out how to find the fractional part of
+ * the memory (which is a double), then if that fraction is zero, convert the
+ * memory to a long (which will chop off its fraction for you). Most users of a
+ * simple 4-function calculator will be happy with numbers in the range that fit
+ * into longs (-9,223,372,036,854,775,808 to +9,223,372,036,854,775,807).
+ */
+
+CalculatorView
+
+/**
+ * An instance of this class is the View for a Calculator. It displays data and
+ * commands to the user. It has no knowledge of either the Model or the
+ * Controller. It simply knows about the screen and how to lay out controls and
+ * data on it. Instructions on how the Controller should tell the View to react
+ * when the user clicks each button (these are 'event handlers; also known as
+ * 'listeners' in Java) are passed to the View from somewhere outside it on its
+ * construction.
+ */
